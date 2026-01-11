@@ -2,7 +2,7 @@
       "relation": ["delegate_permission/common.handle_all_urls"],
       "target": {
         "namespace": "android_app",
-        "package_name": "app.netlify.ruleta_pepo_valo1.twa",
-        "sha256_cert_fingerprints": ["B7:6F:CC:D1:DE:DC:10:F8:08:48:50:DB:B5:FF:12:7B:14:38:AE:9F:FA:90:66:16:51:74:9B:6C:B6:EF:64:7A"]
+        "package_name": "app.vercel.ruletavalo.twa",
+        "sha256_cert_fingerprints": ["B5:0E:12:4F:88:83:A2:42:DC:FF:3C:D7:EA:34:6F:F7:1A:4C:4A:A2:C3:E7:95:B4:A7:CF:A8:87:6C:07:EF:9B"]
       }
     }]
