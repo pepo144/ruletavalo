@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Ruleta Valorant</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ff4655">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #0f1923;
+  color: white;
+  text-align: center;
+}
+
+.container {
+  max-width: 420px;
+  margin: auto;
+  padding: 20px;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  background: #ff4655;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 12px;
+}
+
+/* -------- GRID -------- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin: 20px 0;
+}
+
+.card {
+  background: #111;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: 0.2s;
+}
+
+.card img {
+  width: 100%;
+  border-radius: 10px;
+}
+
+.card span {
+  display: block;
+  padding: 6px;
+  font-weight: bold;
+}
+
+.card.selected {
+  border-color: #ff4655;
+  box-shadow: 0 0 15px #ff4655;
+}
+
+/* -------- VOLUMEN -------- */
+input[type=range] {
+  width: 100%;
+  margin-top: 6px;
+}
+
+/* -------- RULETA -------- */
+.seleccionados {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.seleccionados img {
+  width: 60px;
+  border-radius: 10px;
+  border: 2px solid #ff4655;
+}
+
+.resultado {
+  margin-top: 20px;
+  white-space: pre-line;
+  font-size: 18px;
+  background: rgba(255,255,255,0.08);
+  padding: 15px;
+  border-radius: 8px;
+  min-height: 100px;
+}
+
+.girando {
+  animation: parpadeo 0.6s infinite;
+}
+
+@keyframes parpadeo {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+.roles {
+  text-align: left;
+  margin: 10px 0;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- ================= INICIO ================= -->
+<div id="inicio">
+  <h1>🎯 Ruleta Valorant Goty</h1>
+  <h3>By PedrosoX</h3>
+  <button onclick="startApp()">▶ Start</button>
+</div>
+
+<!-- ================= SELECTOR ================= -->
+<div id="selector" style="display:none">
+  <h2>🎮 Selecciona entre 1 y 5 jugadores</h2>
+
+  <label>🔊 Volumen música</label>
+  <input type="range" min="0" max="100" value="70"
+         oninput="cambiarVolumen(this.value)">
+
+  <div class="grid" id="gridAmigos"></div>
+  <button onclick="confirmarAmigos()">READY</button>
+</div>
+
+<!-- ================= RULETA ================= -->
+<div id="ruleta" style="display:none">
+  <h2>🎯 Ruleta Valorant 🎯</h2>
+
+  <div class="seleccionados" id="listaSeleccionados"></div>
+
+  <h3>Filtrar por rol</h3>
+
+  <label>
+    <input type="checkbox" id="rolTodos" checked>
+    Todos los agentes
+  </label>
+
+  <div class="roles">
+    <label><input type="checkbox" class="rol" value="Duelista"> Duelista</label><br>
+    <label><input type="checkbox" class="rol" value="Iniciador"> Iniciador</label><br>
+    <label><input type="checkbox" class="rol" value="Controlador"> Controlador</label><br>
+    <label><input type="checkbox" class="rol" value="Centinela"> Centinela</label>
+  </div>
+
+  <button onclick="girarRuleta()">🎰 Girar ruleta</button>
+  <button onclick="volverSelector()">🔙 Volver a selección</button>
+
+  <div class="resultado" id="resultado"></div>
+  <hr style="margin:25px 0; opacity:0.3">
+
+  <h2>🔫 Ruleta de armas ⚔️</h2>
+
+  <button onclick="ruletaArmas('r1')">Pistolas (Ronda 1)</button>
+  <button onclick="ruletaArmas('r2')">Ronda 2</button>
+  <button onclick="ruletaArmas('r3')">Ronda 3</button>
+  <button onclick="ruletaArmas('r4')">Ronda 4</button>
+  <button onclick="ruletaArmas('r5')">Todas Las Armas</button>
+
+  <div class="resultado" id="resultadoArma"></div>
+
+  <button onclick="volverSelector()">🔙 Volver</button>
+</div>
+
+</div>
+
+<!-- AUDIO -->
+<audio id="musicaSelect"
+  src="https://cdn.jsdelivr.net/gh/pepo144/sonidos@master/ChooseYour.mp3"
+  loop preload="auto"></audio>
+
+<audio id="sonidoRuleta"
+  src="https://cdn.jsdelivr.net/gh/pepo144/sonidos@master/ruletamario.mp3"
+  preload="auto"></audio>
+
+<script>
+/* ================= DATOS ================= */
+
+const amigos = [
+  { nombre: "PedrosoX", foto: "https://i.imgur.com/YMd8ySe.jpeg" },
+  { nombre: "Chelipox", foto: "https://i.imgur.com/vfer4uH.jpeg" },
+  { nombre: "Jorgito", foto: "https://i.imgur.com/qElZp8N.jpeg" },
+  { nombre: "Lucatoon", foto: "https://i.imgur.com/LsFoH8z.jpeg" },
+  { nombre: "Luchito", foto: "https://i.imgur.com/ulK1W5v.png" },
+  { nombre: "Teyta", foto: "https://i.imgur.com/xmKf0iE.jpeg" },
+  { nombre: "Julitro", foto: "https://i.imgur.com/IeIif1p.jpeg" },
+  { nombre: "Ifex", foto: "https://i.imgur.com/kNUtiGc.jpeg" },
+  { nombre: "Yayan", foto: "https://i.imgur.com/6eijNLM.png" },
+  { nombre: "Walala", foto: "https://i.imgur.com/WqIofBZ.jpeg" },
+  { nombre: "MaroWizz", foto: "https://i.imgur.com/TdywS2T.png" },
+  { nombre: "Nico", foto: "https://i.imgur.com/SM4Uv3F.png" }
+];
+
+const agentesPorRol = {
+  Duelista: ["Jett","Phoenix","Raze","Reyna","Neon","Iso","Yoru","Waylay"],
+  Iniciador: ["Breach","Fade","Gekko","KAY/O","Skye","Sova","Tejo"],
+  Controlador: ["Astra","Brimstone","Harbor","Omen","Viper","Clove"],
+  Centinela: ["Chamber","Cypher","Deadlock","Killjoy","Sage","Vyse","Veto"]
+};
+
+const armas = {
+  r1: ["Classic","Shorty","Frenzy","Ghost","Bandit","Sheriff"],
+  r2: ["Stinger","Spectre","Bulldog","Guardian","Marshall","Outlaw","Bucky","Judge","Ares"],
+  r3: ["Phantom","Vandal","Odin"],
+  r4: ["Phantom","Vandal","Odin","Operator"],
+  r5: ["Classic","Shorty","Frenzy","Ghost","Bandit","Sheriff","Stinger","Spectre","Bulldog","Guardian","Marshall","Outlaw","Bucky","Judge","Ares","Phantom","Vandal","Odin","Operator"],
+};
+
+
+const MAX = 5;
+const seleccionados = [];
+
+/* ================= ELEMENTOS ================= */
+
+const grid = document.getElementById("gridAmigos");
+const resultado = document.getElementById("resultado");
+const musicaSelect = document.getElementById("musicaSelect");
+const resultadoArma = document.getElementById("resultadoArma");
+const sonidoRuleta = document.getElementById("sonidoRuleta");
+
+
+const rolTodos = document.getElementById("rolTodos");
+const rolesCheckbox = document.querySelectorAll(".rol");
+
+/* ================= AUDIO ================= */
+
+sonidoRuleta.volume = 0.7;
+
+/* ================= INICIO ================= */
+
+function startApp() {
+  inicio.style.display = "none";
+  selector.style.display = "block";
+  musicaSelect.volume = 0.7;
+  musicaSelect.play();
+}
+
+function cambiarVolumen(valor) {
+  musicaSelect.volume = valor / 100;
+}
+
+/* ================= CARDS ================= */
+
+amigos.forEach(amigo => {
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerHTML = `<img src="${amigo.foto}"><span>${amigo.nombre}</span>`;
+
+  card.onclick = () => {
+    if (card.classList.contains("selected")) {
+      card.classList.remove("selected");
+      seleccionados.splice(seleccionados.indexOf(amigo), 1);
+      return;
+    }
+    if (seleccionados.length >= MAX) {
+      alert("Máximo 5 jugadores");
+      return;
+    }
+    card.classList.add("selected");
+    seleccionados.push(amigo);
+  };
+  grid.appendChild(card);
+});
+
+/* ================= CONFIRMAR ================= */
+
+function confirmarAmigos() {
+  if (seleccionados.length < 1 || seleccionados.length > 5) {
+    alert("Selecciona entre 1 y 5 jugadores");
+    return;
+  }
+
+  musicaSelect.pause();
+  musicaSelect.currentTime = 0;
+
+  selector.style.display = "none";
+  ruleta.style.display = "block";
+
+  listaSeleccionados.innerHTML = "";
+  seleccionados.forEach(a => {
+    listaSeleccionados.innerHTML += `<img src="${a.foto}">`;
+  });
+}
+
+/* ================= VOLVER ================= */
+
+function volverSelector() {
+  ruleta.style.display = "none";
+  selector.style.display = "block";
+
+  resultado.innerText = "";
+  seleccionados.length = 0;
+
+  document.querySelectorAll(".card").forEach(c =>
+    c.classList.remove("selected")
+  );
+
+  musicaSelect.play();
+}
+
+/* ================= ROLES ================= */
+
+rolTodos.addEventListener("change", () => {
+  rolesCheckbox.forEach(r => r.checked = false);
+});
+
+rolesCheckbox.forEach(r => {
+  r.addEventListener("change", () => {
+    rolTodos.checked = false;
+  });
+});
+
+function obtenerAgentesFiltrados() {
+  if (rolTodos.checked) {
+    return Object.values(agentesPorRol).flat();
+  }
+
+  const roles = [...rolesCheckbox].filter(r => r.checked).map(r => r.value);
+  if (roles.length === 0) {
+    alert("Selecciona al menos un rol o usa 'Todos'");
+    return null;
+  }
+
+  let lista = [];
+  roles.forEach(rol => lista = lista.concat(agentesPorRol[rol]));
+  return lista;
+}
+
+/* ================= RULETA ================= */
+
+function girarRuleta() {
+  const agentes = obtenerAgentesFiltrados();
+  if (!agentes) return;
+
+  resultado.innerText = "";
+  resultado.classList.add("girando");
+
+  sonidoRuleta.currentTime = 0;
+  sonidoRuleta.play();
+
+  const intervalo = setInterval(() => {
+    resultado.innerText = seleccionados
+      .map(a => `🎮 ${a.nombre} → ${agentes[Math.floor(Math.random()*agentes.length)]}`)
+      .join("\n");
+  }, 120);
+
+  setTimeout(() => {
+    clearInterval(intervalo);
+    resultado.classList.remove("girando");
+
+    const mix = [...agentes].sort(() => Math.random() - 0.5);
+    resultado.innerText = seleccionados
+      .map((a,i) => `🎯 ${a.nombre} → ${mix[i % mix.length]}`)
+      .join("\n");
+  }, 5000);
+  
+  setTimeout(() => sonidoRuleta.pause(), 6000);
+}
+
+function ruletaArmas(ronda) {
+  const lista = armas[ronda];
+  if (!lista) return;
+
+  resultadoArma.classList.add("girando");
+  sonidoRuleta.currentTime = 0;
+  sonidoRuleta.play();
+
+  const int = setInterval(() => {
+    resultadoArma.innerText =
+      `🔄 Arma: ${lista[Math.floor(Math.random() * lista.length)]}`;
+  }, 120);
+
+  setTimeout(() => {
+    clearInterval(int);
+    resultadoArma.classList.remove("girando");
+
+    const armaFinal =
+      lista[Math.floor(Math.random() * lista.length)];
+
+    resultadoArma.innerText = `🔫 TODOS USAN: ${armaFinal}`;
+      }, 5000);
+   setTimeout(() => sonidoRuleta.pause(), 6000);
+}
+
+
+</script>
+
+</body>
+</html>

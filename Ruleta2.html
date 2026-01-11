@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Ruleta Valorant</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #0f1923;
+  color: white;
+  text-align: center;
+}
+
+.container {
+  max-width: 420px;
+  margin: auto;
+  padding: 20px;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  background: #ff4655;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 12px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin: 20px 0;
+}
+
+.card {
+  background: #111;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 3px solid transparent;
+}
+
+.card img {
+  width: 100%;
+  border-radius: 10px;
+}
+
+.card span {
+  display: block;
+  padding: 6px;
+  font-weight: bold;
+}
+
+.card.selected {
+  border-color: #ff4655;
+  box-shadow: 0 0 15px #ff4655;
+}
+
+.seleccionados {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.seleccionados img {
+  width: 60px;
+  border-radius: 10px;
+  border: 2px solid #ff4655;
+}
+
+.resultado {
+  margin-top: 20px;
+  white-space: pre-line;
+  font-size: 18px;
+  background: rgba(255,255,255,0.08);
+  padding: 15px;
+  border-radius: 8px;
+  min-height: 80px;
+}
+
+.girando {
+  animation: parpadeo 0.6s infinite;
+}
+
+@keyframes parpadeo {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div id="inicio">
+  <h1>🎯 Ruleta Valorant Goty</h1>
+  <button onclick="startApp()">▶ Start</button>
+</div>
+
+<div id="selector" style="display:none">
+  <h2>Selecciona jugadores</h2>
+  <div class="grid" id="gridAmigos"></div>
+  <button onclick="confirmarAmigos()">READY</button>
+</div>
+
+<div id="ruleta" style="display:none">
+  <h2>🎯 Agentes</h2>
+
+  <div class="seleccionados" id="listaSeleccionados"></div>
+
+  <button onclick="girarRuleta()">🎰 Girar agentes</button>
+
+  <div class="resultado" id="resultado"></div>
+
+  <hr style="margin:25px 0; opacity:0.3">
+
+  <h2>🔫 Ruleta de armas</h2>
+
+  <button onclick="ruletaArmas('r1')">Pistolas (Ronda 1)</button>
+  <button onclick="ruletaArmas('r2')">Ronda 2</button>
+  <button onclick="ruletaArmas('r3')">Ronda 3</button>
+  <button onclick="ruletaArmas('r4')">Ronda 4</button>
+
+  <div class="resultado" id="resultadoArma"></div>
+
+  <button onclick="volverSelector()">🔙 Volver</button>
+</div>
+
+</div>
+
+<audio id="musicaSelect"
+  src="https://cdn.jsdelivr.net/gh/pepo144/sonidos@master/ChooseYour.mp3"
+  loop></audio>
+
+<audio id="sonidoRuleta"
+  src="https://cdn.jsdelivr.net/gh/pepo144/sonidos@master/ruletamario.mp3"></audio>
+
+<script>
+const amigos = [
+  { nombre: "PedrosoX", foto: "https://i.imgur.com/YMd8ySe.jpeg" },
+  { nombre: "Chelipox", foto: "https://i.imgur.com/vfer4uH.jpeg" }
+];
+
+const armas = {
+  r1: ["Classic","Shorty","Frenzy","Ghost","Sheriff"],
+  r2: ["Stinger","Spectre","Bulldog","Guardian","Marshall","Outlaw","Bucky","Judge","Ares"],
+  r3: ["Phantom","Vandal","Odin"],
+  r4: ["Phantom","Vandal","Odin","Operator"]
+};
+
+const seleccionados = [];
+
+const grid = document.getElementById("gridAmigos");
+const resultado = document.getElementById("resultado");
+const resultadoArma = document.getElementById("resultadoArma");
+const sonidoRuleta = document.getElementById("sonidoRuleta");
+
+sonidoRuleta.volume = 0.7;
+
+function startApp() {
+  inicio.style.display = "none";
+  selector.style.display = "block";
+}
+
+amigos.forEach(a => {
+  const c = document.createElement("div");
+  c.className = "card";
+  c.innerHTML = `<img src="${a.foto}"><span>${a.nombre}</span>`;
+  c.onclick = () => {
+    c.classList.toggle("selected");
+    if (seleccionados.includes(a)) {
+      seleccionados.splice(seleccionados.indexOf(a),1);
+    } else {
+      seleccionados.push(a);
+    }
+  };
+  grid.appendChild(c);
+});
+
+function confirmarAmigos() {
+  selector.style.display = "none";
+  ruleta.style.display = "block";
+  listaSeleccionados.innerHTML = seleccionados.map(a => `<img src="${a.foto}">`).join("");
+}
+
+function girarRuleta() {
+  resultado.classList.add("girando");
+  sonidoRuleta.currentTime = 0;
+  sonidoRuleta.play();
+
+  const agentes = ["Jett","Raze","Omen","Sage","Phoenix"];
+
+  const int = setInterval(() => {
+    resultado.innerText = seleccionados
+      .map(a => `${a.nombre} → ${agentes[Math.floor(Math.random()*agentes.length)]}`)
+      .join("\n");
+  },120);
+
+  setTimeout(() => {
+    clearInterval(int);
+    resultado.classList.remove("girando");
+  },5000);
+}
+
+function ruletaArmas(ronda) {
+  const lista = armas[ronda];
+  resultadoArma.classList.add("girando");
+  sonidoRuleta.currentTime = 0;
+  sonidoRuleta.play();
+
+  const int = setInterval(() => {
+    resultadoArma.innerText = `🔄 Arma: ${lista[Math.floor(Math.random()*lista.length)]}`;
+  },120);
+
+  setTimeout(() => {
+    clearInterval(int);
+    resultadoArma.classList.remove("girando");
+    const armaFinal = lista[Math.floor(Math.random()*lista.length)];
+    resultadoArma.innerText = `🔫 TODOS USAN: ${armaFinal}`;
+  },5000);
+}
+
+function volverSelector() {
+  location.reload();
+}
+</script>
+
+</body>
+</html>
