@@ -396,6 +396,18 @@ function ruletaArmas(ronda) {
    setTimeout(() => sonidoRuleta.pause(), 6000);
 }
 
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    // App minimizada o en segundo plano
+    musicaSelect.pause();
+  } else {
+    // App vuelve al frente
+    // Solo reproducir si estamos en el selector
+    if (selector.style.display === "block") {
+      musicaSelect.play().catch(() => {});
+    }
+  }
+});
 
 </script>
 
